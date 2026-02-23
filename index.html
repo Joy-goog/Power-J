@@ -1230,11 +1230,26 @@ const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 const today = () => new Date().toISOString().slice(0,10);
 const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+// ══════════════════════════════════
+// FIREBASE SAVE · Firestore에 데이터 저장
+// todos, categories, settings를 Firestore 'users/default' 문서에 저장
+// localStorage도 병행 유지 (오프라인 폴백)
+// ══════════════════════════════════
 function save() {
   localStorage.setItem('pj_todos',    JSON.stringify(todos));
   localStorage.setItem('pj_cats',     JSON.stringify(categories));
   localStorage.setItem('pj_settings', JSON.stringify(settings));
   localStorage.setItem('pj_notified', JSON.stringify([...notified]));
+  // Firestore 저장 (초기화 완료 후)
+  if (window._db) {
+    window._setDoc(window._doc(window._db, 'users', 'default'), {
+      todos: JSON.stringify(todos),
+      categories: JSON.stringify(categories),
+      settings: JSON.stringify(settings),
+      notified: JSON.stringify([...notified]),
+      updatedAt: new Date().toISOString()
+    }).catch(e => console.warn('Firestore save error:', e));
+  }
 }
 
 // nextDue: 반복 주기(daily/weekly/monthly)에 따라 다음 마감일 계산
@@ -2175,6 +2190,52 @@ if ('Notification' in window && Notification.permission === 'default') {
 }
 setInterval(checkReminders, 60000);
 checkReminders();
+</script>
+
+<!-- ══════════════════════════════════ -->
+<!-- FIREBASE SDK + FIRESTORE 초기화    -->
+<!-- ══════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0LbQfLiNNIFReyi1KIQEdqgnzOZtTThE",
+    authDomain: "power-j-2602.firebaseapp.com",
+    projectId: "power-j-2602",
+    storageBucket: "power-j-2602.firebasestorage.app",
+    messagingSenderId: "935468256385",
+    appId: "1:935468256385:web:df7c2b7d7b9cee5c3d1180"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // save() 함수에서 사용할 수 있도록 전역에 노출
+  window._db     = db;
+  window._doc    = doc;
+  window._setDoc = setDoc;
+
+  // ── Firestore에서 데이터 불러오기 ──
+  // 앱 로드 시 1회 실행: Firestore 데이터가 있으면 localStorage보다 우선 적용
+  try {
+    const snap = await getDoc(doc(db, 'users', 'default'));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.todos)      { todos      = JSON.parse(data.todos);      localStorage.setItem('pj_todos',    data.todos); }
+      if (data.categories) { categories = JSON.parse(data.categories); localStorage.setItem('pj_cats',     data.categories); }
+      if (data.settings)   { settings   = JSON.parse(data.settings);   localStorage.setItem('pj_settings', data.settings); }
+      if (data.notified)   { notified   = new Set(JSON.parse(data.notified)); }
+      // 화면 갱신
+      syncCatSelects();
+      refresh();
+      console.log('✅ Firestore 데이터 로드 완료');
+    } else {
+      console.log('ℹ️ Firestore 신규 사용자 - localStorage 데이터 사용');
+    }
+  } catch(e) {
+    console.warn('Firestore load error (localStorage 사용):', e);
+  }
 </script>
 </body>
 </html>
