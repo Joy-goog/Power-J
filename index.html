@@ -91,44 +91,27 @@ body {
 
 .pin-subtitle { font-size: 0.88rem; color: rgba(255,255,255,.75); font-weight: 500; text-align: center; }
 
-.pin-dots { display: flex; gap: 14px; margin: 4px 0; }
-.pin-dot {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 2.5px solid rgba(255,255,255,.5);
-  background: transparent;
-  transition: background .15s, border-color .15s, transform .15s;
+/* Google 로그인 버튼 */
+.google-login-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; color: #3c4043;
+  border: none; border-radius: 12px;
+  padding: 13px 24px; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; width: 100%; justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  transition: background .15s, box-shadow .15s, transform .1s;
 }
-.pin-dot.filled { background: #fff; border-color: #fff; transform: scale(1.1); }
+.google-login-btn:hover { background: #f8f8f8; box-shadow: 0 4px 18px rgba(0,0,0,.2); }
+.google-login-btn:active { transform: scale(.97); }
+.google-login-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 
-.pin-error {
-  font-size: 0.8rem; color: #fca5a5; font-weight: 600;
-  min-height: 18px; text-align: center;
-  transition: opacity .2s;
+.login-loading {
+  color: rgba(255,255,255,.8); font-size: 0.88rem; text-align: center;
 }
-.pin-error:empty { opacity: 0; }
 
-.pin-keypad {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; width: 100%;
+.user-info {
+  font-size: 0.82rem; color: rgba(255,255,255,.75); text-align: center;
 }
-.pin-key {
-  background: rgba(255,255,255,.15); border: none;
-  border-radius: 12px; color: #fff;
-  padding: 14px; font-size: 1.1rem; font-weight: 700;
-  cursor: pointer; transition: background .12s, transform .08s;
-  display: flex; align-items: center; justify-content: center;
-}
-.pin-key:hover { background: rgba(255,255,255,.25); }
-.pin-key:active { transform: scale(.94); background: rgba(255,255,255,.3); }
-.pin-key.empty { background: transparent; cursor: default; pointer-events: none; }
-.pin-key.back { font-size: 1.3rem; }
-
-@keyframes pinShake {
-  0%,100% { transform: translateX(0); }
-  20%,60% { transform: translateX(-8px); }
-  40%,80% { transform: translateX(8px); }
-}
-.pin-dots.shake { animation: pinShake .4s ease; }
 
 /* ═══════════════════════ 전체 레이아웃 ═══════════════════════ */
 /* 사이드바 + 메인 영역을 flex row로 배치 */
@@ -816,17 +799,18 @@ kbd {
       <span class="bolt">⚡</span>
       <span>POWER J</span>
     </div>
-    <div class="pin-subtitle" id="pin-subtitle">비밀번호를 입력하세요</div>
-    <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
-    <div class="pin-error" id="pin-error"></div>
-    <div class="pin-keypad" id="pin-keypad">
-      <!-- rendered by JS -->
-    </div>
+    <div class="pin-subtitle" id="pin-subtitle">Google 계정으로 시작하세요</div>
+    <div class="user-info" id="login-status"></div>
+    <button class="google-login-btn" id="google-login-btn" onclick="window._googleLogin && window._googleLogin()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Google로 로그인
+    </button>
+    <div class="login-loading" id="login-loading" style="display:none">로그인 중...</div>
   </div>
 </div>
 
@@ -890,7 +874,10 @@ kbd {
       <button class="sb-footer-btn" onclick="exportData('json')" title="JSON 내보내기">⬇ JSON</button>
       <button class="sb-footer-btn" onclick="exportData('csv')" title="CSV 내보내기">⬇ CSV</button>
       <button class="sb-footer-btn" onclick="openSettings()" title="설정">⚙️</button>
+      <button class="sb-footer-btn" id="logout-btn" onclick="window._logout && window._logout()" title="로그아웃" style="display:none">🚪 로그아웃</button>
+      <a href="admin.html" class="sb-footer-btn" title="관리자 페이지" style="text-decoration:none;text-align:center;color:rgba(255,255,255,.5);font-size:0.75rem;">⚙ 관리자</a>
     </div>
+    <div id="sb-user-email" style="font-size:0.72rem;color:rgba(255,255,255,.6);text-align:center;padding:4px 8px;word-break:break-all;display:none"></div>
   </aside>
 
   <!-- MAIN -->
@@ -1173,12 +1160,8 @@ let notified   = new Set(JSON.parse(localStorage.getItem('pj_notified') || '[]')
 let selColor   = '#7CA9C8';
 let dragSrc    = null;
 
-// PIN state
-let pinBuf      = [];
-let pinState    = 'idle'; // verify | setup-first | setup-confirm | change-current | change-new | change-confirm
-let newPinBuf   = [];
-let miniPinBuf  = [];
-let miniPinState= 'change-current';
+// Auth state
+let currentUser = null;
 
 const PALETTE = ['#7CA9C8','#9585C4','#C07A8C','#5E9E78','#D4875A','#5CAAA2','#8A97A6','#D4A754','#7AB3C8','#C27A5A'];
 
@@ -1240,9 +1223,9 @@ function save() {
   localStorage.setItem('pj_cats',     JSON.stringify(categories));
   localStorage.setItem('pj_settings', JSON.stringify(settings));
   localStorage.setItem('pj_notified', JSON.stringify([...notified]));
-  // Firestore 저장 (초기화 완료 후)
-  if (window._db) {
-    window._setDoc(window._doc(window._db, 'users', 'default'), {
+  // Firestore 저장 (로그인된 유저의 개인 경로에 저장)
+  if (window._db && window._userDocPath) {
+    window._setDoc(window._doc(window._db, 'users', window._userDocPath), {
       todos: JSON.stringify(todos),
       categories: JSON.stringify(categories),
       settings: JSON.stringify(settings),
@@ -1263,175 +1246,18 @@ function nextDue(d, r) {
 }
 
 // ══════════════════════════════════
-// PIN SYSTEM · 4자리 비밀번호 잠금
-// 최초 실행 시 PIN 설정, 이후 진입 시 확인
-// 설정 모달 내 미니 키패드로 PIN 변경 가능
 // ══════════════════════════════════
-function renderPinKeypad() {
-  const kp = document.getElementById('pin-keypad');
-  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  kp.innerHTML = keys.map(k => {
-    if (k==='') return `<button class="pin-key empty"></button>`;
-    if (k==='⌫') return `<button class="pin-key back" onclick="pinBackspace()">⌫</button>`;
-    return `<button class="pin-key" onclick="pinInput('${k}')">${k}</button>`;
-  }).join('');
-}
+// AUTH SYSTEM · Google 로그인 처리
+// Firebase Auth onAuthStateChanged로 상태 관리
+// ══════════════════════════════════
 
-function renderMiniKeypad() {
-  const kp = document.getElementById('mini-keypad');
-  if (!kp) return;
-  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  kp.innerHTML = keys.map(k => {
-    if (k==='') return `<button class="mini-key empty"></button>`;
-    if (k==='⌫') return `<button class="mini-key back" onclick="miniPinInput('back')">⌫</button>`;
-    return `<button class="mini-key" onclick="miniPinInput('${k}')">${k}</button>`;
-  }).join('');
-}
-
-function updatePinDots() {
-  for (let i=0;i<4;i++) {
-    const d = document.getElementById('pd'+i);
-    if (d) d.classList.toggle('filled', i < pinBuf.length);
-  }
-}
-
-function updateMiniDots() {
-  for (let i=0;i<4;i++) {
-    const d = document.getElementById('mpd'+i);
-    if (d) d.classList.toggle('filled', i < miniPinBuf.length);
-  }
-}
-
-function setPinTitle(t) { document.getElementById('pin-subtitle').textContent = t; }
-function setPinError(t) {
-  const el = document.getElementById('pin-error');
-  el.textContent = t;
-  if (t) {
-    document.getElementById('pin-dots').classList.add('shake');
-    setTimeout(()=>document.getElementById('pin-dots').classList.remove('shake'),400);
-  }
-}
-function setPinChangeErr(t) {
-  const el = document.getElementById('pin-change-err');
-  if (el) el.textContent = t;
-}
-function setPinChangeLabel(t) {
-  const el = document.getElementById('pin-change-label');
-  if (el) el.textContent = t;
-}
-
-function initPin() {
-  renderPinKeypad();
-  const stored = localStorage.getItem('pj_pin');
-  if (!stored) {
-    pinState = 'setup-first';
-    setPinTitle('처음 오셨군요! 비밀번호를 설정하세요 ✨');
-  } else {
-    pinState = 'verify';
-    setPinTitle('비밀번호를 입력하세요 🔐');
-  }
-}
-
-function pinInput(digit) {
-  if (pinBuf.length >= 4) return;
-  pinBuf.push(digit);
-  updatePinDots();
-  setPinError('');
-  if (pinBuf.length === 4) setTimeout(handlePinComplete, 180);
-}
-
-function pinBackspace() {
-  if (pinBuf.length > 0) { pinBuf.pop(); updatePinDots(); }
-}
-
-function handlePinComplete() {
-  const pin = pinBuf.join('');
-
-  if (pinState === 'verify') {
-    if (btoa(pin) === localStorage.getItem('pj_pin')) {
-      hidePinScreen();
-    } else {
-      pinBuf = []; updatePinDots();
-      setPinError('잘못된 비밀번호예요 😅');
-    }
-
-  } else if (pinState === 'setup-first') {
-    newPinBuf = [...pinBuf]; pinBuf = []; updatePinDots();
-    pinState = 'setup-confirm';
-    setPinTitle('비밀번호를 한 번 더 입력하세요 🔑');
-
-  } else if (pinState === 'setup-confirm') {
-    if (pin === newPinBuf.join('')) {
-      localStorage.setItem('pj_pin', btoa(pin));
-      hidePinScreen();
-      showToast('🔐 비밀번호 설정 완료!', 'POWER J에 오신 걸 환영해요 ✨');
-    } else {
-      pinBuf = []; updatePinDots(); newPinBuf = [];
-      pinState = 'setup-first';
-      setPinTitle('일치하지 않아요! 다시 설정해주세요 😔');
-      setPinError('비밀번호가 일치하지 않아요');
-    }
-  }
-}
-
+// ── 로그인 화면 숨기기 (Google 로그인 성공 후 호출)
 function hidePinScreen() {
   const ps = document.getElementById('pin-screen');
   ps.classList.add('hidden');
   setTimeout(() => ps.style.display = 'none', 300);
-  document.getElementById('new-title').focus();
-}
-
-// Mini PIN (in settings modal for PIN change)
-function miniPinInput(k) {
-  if (k === 'back') {
-    if (miniPinBuf.length > 0) { miniPinBuf.pop(); updateMiniDots(); }
-    return;
-  }
-  if (miniPinBuf.length >= 4) return;
-  miniPinBuf.push(k); updateMiniDots(); setPinChangeErr('');
-  if (miniPinBuf.length === 4) setTimeout(handleMiniPin, 180);
-}
-
-function handleMiniPin() {
-  const pin = miniPinBuf.join('');
-  const stored = localStorage.getItem('pj_pin');
-
-  if (miniPinState === 'change-current') {
-    if (!stored || btoa(pin) === stored) {
-      miniPinBuf = []; updateMiniDots();
-      miniPinState = 'change-new';
-      setPinChangeLabel('새 비밀번호 입력');
-    } else {
-      miniPinBuf = []; updateMiniDots();
-      setPinChangeErr('현재 비밀번호가 맞지 않아요');
-    }
-  } else if (miniPinState === 'change-new') {
-    newPinBuf = [...miniPinBuf]; miniPinBuf = []; updateMiniDots();
-    miniPinState = 'change-confirm';
-    setPinChangeLabel('새 비밀번호 확인');
-  } else if (miniPinState === 'change-confirm') {
-    if (pin === newPinBuf.join('')) {
-      localStorage.setItem('pj_pin', btoa(pin));
-      miniPinBuf = []; updateMiniDots(); newPinBuf = [];
-      miniPinState = 'change-current';
-      setPinChangeLabel('현재 비밀번호 입력');
-      setPinChangeErr('');
-      showToast('🔐 비밀번호 변경 완료!', '새 비밀번호로 저장됐어요.');
-    } else {
-      miniPinBuf = []; updateMiniDots(); newPinBuf = [];
-      miniPinState = 'change-new';
-      setPinChangeLabel('새 비밀번호 입력');
-      setPinChangeErr('비밀번호가 일치하지 않아요. 다시 입력해주세요.');
-    }
-  }
-}
-
-function resetPinFlow() {
-  miniPinBuf = []; newPinBuf = [];
-  miniPinState = 'change-current';
-  updateMiniDots();
-  setPinChangeLabel('현재 비밀번호 입력');
-  setPinChangeErr('');
+  const el = document.getElementById('new-title');
+  if (el) el.focus();
 }
 
 // ══════════════════════════════════
@@ -2181,7 +2007,6 @@ initCal();
 syncCatSelects();
 renderPalette();
 refresh();
-initPin();
 // Show dot if unread notifs
 if (notifLog.length) document.getElementById('notif-dot').classList.add('show');
 
@@ -2192,12 +2017,14 @@ setInterval(checkReminders, 60000);
 checkReminders();
 </script>
 
-<!-- ══════════════════════════════════ -->
-<!-- FIREBASE SDK + FIRESTORE 초기화    -->
-<!-- ══════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════ -->
+<!-- FIREBASE SDK · Auth + Firestore 초기화           -->
+<!-- Google 로그인 → 유저별 Firestore 경로 분리        -->
+<!-- ══════════════════════════════════════════════════ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD0LbQfLiNNIFReyi1KIQEdqgnzOZtTThE",
@@ -2208,34 +2035,104 @@ checkReminders();
     appId: "1:935468256385:web:df7c2b7d7b9cee5c3d1180"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const app      = initializeApp(firebaseConfig);
+  const db       = getFirestore(app);
+  const auth     = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-  // save() 함수에서 사용할 수 있도록 전역에 노출
+  // ── 전역 노출: save() 함수에서 사용
   window._db     = db;
   window._doc    = doc;
   window._setDoc = setDoc;
 
-  // ── Firestore에서 데이터 불러오기 ──
-  // 앱 로드 시 1회 실행: Firestore 데이터가 있으면 localStorage보다 우선 적용
-  try {
-    const snap = await getDoc(doc(db, 'users', 'default'));
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.todos)      { todos      = JSON.parse(data.todos);      localStorage.setItem('pj_todos',    data.todos); }
-      if (data.categories) { categories = JSON.parse(data.categories); localStorage.setItem('pj_cats',     data.categories); }
-      if (data.settings)   { settings   = JSON.parse(data.settings);   localStorage.setItem('pj_settings', data.settings); }
-      if (data.notified)   { notified   = new Set(JSON.parse(data.notified)); }
-      // 화면 갱신
+  // ── Firestore에서 유저 데이터 로드
+  async function loadUserData(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.todos)      { todos      = JSON.parse(data.todos);      localStorage.setItem('pj_todos',    data.todos); }
+        if (data.categories) { categories = JSON.parse(data.categories); localStorage.setItem('pj_cats',     data.categories); }
+        if (data.settings)   { settings   = JSON.parse(data.settings);   localStorage.setItem('pj_settings', data.settings); }
+        if (data.notified)   { notified   = new Set(JSON.parse(data.notified)); }
+      } else {
+        // 신규 유저: localStorage 초기화
+        todos = []; categories = [
+          {name:'업무',color:'#7CA9C8'},{name:'개인',color:'#C07A8C'},
+          {name:'쇼핑',color:'#D4875A'},{name:'건강',color:'#5E9E78'},{name:'학습',color:'#9585C4'}
+        ];
+        settings = {defaultRemind:'none'}; notified = new Set();
+      }
       syncCatSelects();
       refresh();
-      console.log('✅ Firestore 데이터 로드 완료');
-    } else {
-      console.log('ℹ️ Firestore 신규 사용자 - localStorage 데이터 사용');
+    } catch(e) {
+      console.warn('Firestore load error:', e);
     }
-  } catch(e) {
-    console.warn('Firestore load error (localStorage 사용):', e);
   }
+
+  // ── Google 로그인
+  window._googleLogin = async () => {
+    const btn = document.getElementById('google-login-btn');
+    const loading = document.getElementById('login-loading');
+    if (btn) btn.style.display = 'none';
+    if (loading) loading.style.display = 'block';
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      if (btn) btn.style.display = 'flex';
+      if (loading) loading.style.display = 'none';
+      console.error('로그인 실패:', e);
+    }
+  };
+
+  // ── 로그아웃
+  window._logout = async () => {
+    await signOut(auth);
+    todos = []; categories = []; settings = {}; notified = new Set();
+    localStorage.clear();
+    refresh();
+  };
+
+  // ── 인증 상태 감지 (로그인/로그아웃 자동 처리)
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // 로그인 성공
+      currentUser = user;
+      window._currentUid = user.uid;
+
+      // 사이드바에 유저 이메일 표시
+      const emailEl = document.getElementById('sb-user-email');
+      const logoutBtn = document.getElementById('logout-btn');
+      if (emailEl) { emailEl.textContent = user.email; emailEl.style.display = 'block'; }
+      if (logoutBtn) logoutBtn.style.display = 'block';
+
+      // save() 경로 업데이트
+      window._userDocPath = user.uid;
+
+      // 유저 프로필 정보 Firestore에 기록 (관리자 백오피스에서 조회용)
+      window._setDoc(window._doc(window._db, 'users', user.uid), {
+        email: user.email || '',
+        name: user.displayName || '',
+        photo: user.photoURL || '',
+        createdAt: new Date().toISOString(),
+      }, { merge: true }).catch(() => {});
+
+      await loadUserData(user.uid);
+      hidePinScreen();
+      showToast('👋 환영합니다!', user.displayName || user.email);
+    } else {
+      // 로그아웃 상태 → 로그인 화면 표시
+      currentUser = null;
+      window._currentUid = null;
+      window._userDocPath = null;
+      const ps = document.getElementById('pin-screen');
+      if (ps) { ps.style.display = 'flex'; ps.classList.remove('hidden'); }
+      const emailEl = document.getElementById('sb-user-email');
+      const logoutBtn = document.getElementById('logout-btn');
+      if (emailEl) emailEl.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+  });
 </script>
 </body>
 </html>
