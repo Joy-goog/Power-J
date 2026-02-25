@@ -2024,7 +2024,7 @@ checkReminders();
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD0LbQfLiNNIFReyi1KIQEdqgnzOZtTThE",
@@ -2070,14 +2070,22 @@ checkReminders();
     }
   }
 
-  // ── Google 로그인
+  // ── 리다이렉트 결과 처리 (페이지 로드 시 1회)
+  try {
+    const result = await getRedirectResult(auth);
+    // 리다이렉트 후 돌아온 경우 onAuthStateChanged가 자동 처리
+  } catch(e) {
+    console.error('리다이렉트 결과 오류:', e);
+  }
+
+  // ── Google 로그인 (리다이렉트 방식)
   window._googleLogin = async () => {
     const btn = document.getElementById('google-login-btn');
     const loading = document.getElementById('login-loading');
     if (btn) btn.style.display = 'none';
     if (loading) loading.style.display = 'block';
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
     } catch(e) {
       if (btn) btn.style.display = 'flex';
       if (loading) loading.style.display = 'none';
