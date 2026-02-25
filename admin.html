@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POWER J · 관리자</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F3EFE8; --surface: #ffffff; --border: #E2D9CC;
+  --primary: #7CA9C8; --text: #2C3A48; --muted: #8A97A6;
+  --sbg: linear-gradient(160deg, #7CA9C8 0%, #5A88A8 100%);
+  --shadow: 0 2px 18px rgba(44,58,72,.07);
+  --r: 14px;
+}
+body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── 로그인 화면 ── */
+.login-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--sbg);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-screen.hidden { display: none; }
+.login-card {
+  background: rgba(255,255,255,.13); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.22); border-radius: 24px;
+  padding: 44px 40px 36px; width: 360px; max-width: 94vw;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+}
+.login-logo { font-size: 1.9rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px; }
+.login-logo .bolt { font-size: 2rem; filter: drop-shadow(0 0 8px rgba(251,191,36,.8)); }
+.login-badge { background: rgba(255,255,255,.18); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.05em; }
+.login-input {
+  width: 100%; padding: 13px 16px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.3); background: rgba(255,255,255,.15);
+  color: #fff; font-size: 1rem; outline: none;
+  transition: border-color .15s, background .15s;
+}
+.login-input::placeholder { color: rgba(255,255,255,.55); }
+.login-input:focus { border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.22); }
+.login-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  background: #fff; color: var(--primary); font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: opacity .15s, transform .1s;
+}
+.login-btn:hover { opacity: .92; }
+.login-btn:active { transform: scale(.97); }
+.login-error { color: rgba(255,180,180,.95); font-size: 0.83rem; min-height: 18px; text-align: center; }
+
+/* ── 대시보드 레이아웃 ── */
+.admin-wrap { display: none; min-height: 100vh; flex-direction: column; }
+.admin-wrap.show { display: flex; }
+
+.topbar {
+  background: var(--sbg); color: #fff;
+  padding: 0 28px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 12px rgba(44,58,72,.12);
+}
+.topbar-logo { font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.topbar-logo .bolt { filter: drop-shadow(0 0 6px rgba(251,191,36,.8)); }
+.topbar-badge { background: rgba(255,255,255,.2); font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.logout-btn {
+  background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3);
+  padding: 7px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+  transition: background .15s;
+}
+.logout-btn:hover { background: rgba(255,255,255,.25); }
+
+.content { flex: 1; padding: 28px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* ── 요약 카드 ── */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.summary-card {
+  background: var(--surface); border-radius: var(--r); padding: 22px 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.summary-num { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.summary-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+
+/* ── 회원 테이블 ── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title { font-size: 1rem; font-weight: 700; }
+.search-input {
+  padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 0.88rem; outline: none; width: 220px;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--primary); }
+
+.table-wrap {
+  background: var(--surface); border-radius: var(--r);
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--bg); }
+th {
+  padding: 12px 16px; text-align: left; font-size: 0.78rem;
+  font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.04em; border-bottom: 1px solid var(--border);
+}
+td { padding: 13px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+  vertical-align: middle; margin-right: 8px;
+}
+.user-name-wrap { display: flex; align-items: center; }
+.badge {
+  display: inline-block; padding: 3px 9px; border-radius: 20px;
+  font-size: 0.73rem; font-weight: 600;
+}
+.badge-active { background: #EDF8F1; color: #3A8A5A; }
+.badge-inactive { background: #F5F5F5; color: #999; }
+
+.empty-row td { text-align: center; color: var(--muted); padding: 40px; }
+
+/* ── 로딩 ── */
+.loading { text-align: center; color: var(--muted); padding: 48px; font-size: 0.9rem; }
+
+/* ── 반응형 ── */
+@media (max-width: 700px) {
+  .content { padding: 16px; }
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- 관리자 로그인 화면 -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="bolt">⚡</span>
+      <span>POWER J</span>
+    </div>
+    <div class="login-badge">ADMIN</div>
+    <input type="password" class="login-input" id="admin-pw" placeholder="관리자 비밀번호 입력"
+      onkeydown="if(event.key==='Enter') tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">로그인</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- 관리자 대시보드 -->
+<div class="admin-wrap" id="admin-wrap">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span class="bolt">⚡</span>
+      <span>POWER J</span>
+      <span class="topbar-badge">ADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <button class="logout-btn" onclick="adminLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- 콘텐츠 -->
+  <div class="content">
+
+    <!-- 요약 카드 -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-num" id="s-total">-</div>
+        <div class="summary-label">전체 회원</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" id="s-active">-</div>
+        <div class="summary-label">활성 회원 (todo 1개↑)</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" id="s-todos">-</div>
+        <div class="summary-label">전체 todo 수</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" id="s-done">-</div>
+        <div class="summary-label">완료된 todo</div>
+      </div>
+    </div>
+
+    <!-- 회원 목록 -->
+    <div class="section-header">
+      <div class="section-title">회원 목록</div>
+      <input type="text" class="search-input" id="user-search" placeholder="이메일·이름 검색" oninput="filterTable()">
+    </div>
+    <div class="table-wrap">
+      <div class="loading" id="loading">데이터 불러오는 중...</div>
+      <table id="user-table" style="display:none">
+        <thead>
+          <tr>
+            <th>회원</th>
+            <th>이메일</th>
+            <th>가입일</th>
+            <th>마지막 활동</th>
+            <th>Todo</th>
+            <th>완료</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── 관리자 비밀번호 (여기서 변경 가능)
+const ADMIN_PASSWORD = 'powerj2026';
+
+// ── 세션 유지 (새로고침 시 재로그인 방지)
+function tryLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  const err = document.getElementById('login-error');
+  if (pw === ADMIN_PASSWORD) {
+    sessionStorage.setItem('pj_admin', 'true');
+    showDashboard();
+  } else {
+    err.textContent = '비밀번호가 올바르지 않아요';
+    document.getElementById('admin-pw').value = '';
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('pj_admin');
+  document.getElementById('admin-wrap').classList.remove('show');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('admin-pw').value = '';
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin-wrap').classList.add('show');
+  loadUsers();
+}
+
+// 페이지 로드 시 세션 확인
+if (sessionStorage.getItem('pj_admin') === 'true') {
+  showDashboard();
+}
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD0LbQfLiNNIFReyi1KIQEdqgnzOZtTThE",
+  authDomain: "power-j-2602.firebaseapp.com",
+  projectId: "power-j-2602",
+  storageBucket: "power-j-2602.firebasestorage.app",
+  messagingSenderId: "935468256385",
+  appId: "1:935468256385:web:df7c2b7d7b9cee5c3d1180"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+let allUsers = [];
+
+window.loadUsers = async function() {
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    allUsers = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const todos = data.todos ? JSON.parse(data.todos) : [];
+      const doneCnt = todos.filter(t => t.done).length;
+      allUsers.push({
+        uid:       doc.id,
+        email:     data.email     || '-',
+        name:      data.name      || '-',
+        photo:     data.photo     || '',
+        createdAt: data.createdAt || '',
+        updatedAt: data.updatedAt || '',
+        todoCnt:   todos.length,
+        doneCnt:   doneCnt,
+      });
+    });
+
+    // 요약 카드
+    const totalTodos = allUsers.reduce((s, u) => s + u.todoCnt, 0);
+    const totalDone  = allUsers.reduce((s, u) => s + u.doneCnt, 0);
+    const active     = allUsers.filter(u => u.todoCnt > 0).length;
+    document.getElementById('s-total').textContent  = allUsers.length;
+    document.getElementById('s-active').textContent = active;
+    document.getElementById('s-todos').textContent  = totalTodos;
+    document.getElementById('s-done').textContent   = totalDone;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('user-table').style.display = 'table';
+    renderTable(allUsers);
+
+  } catch(e) {
+    document.getElementById('loading').textContent = '데이터 로드 실패: ' + e.message;
+    console.error(e);
+  }
+};
+
+function renderTable(users) {
+  const tbody = document.getElementById('user-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">회원이 없어요</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const avatar = u.photo
+      ? `<img src="${u.photo}" class="user-avatar" onerror="this.style.display='none'">`
+      : `<span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-size:.85rem;font-weight:700;text-align:center;line-height:32px;margin-right:8px;">${(u.name||u.email||'?')[0].toUpperCase()}</span>`;
+    const created = u.createdAt ? u.createdAt.slice(0,10) : '-';
+    const updated = u.updatedAt ? u.updatedAt.slice(0,16).replace('T',' ') : '-';
+    const statusBadge = u.todoCnt > 0
+      ? '<span class="badge badge-active">활성</span>'
+      : '<span class="badge badge-inactive">미사용</span>';
+    return `<tr>
+      <td><div class="user-name-wrap">${avatar}<span>${esc(u.name)}</span></div></td>
+      <td>${esc(u.email)}</td>
+      <td>${created}</td>
+      <td>${updated}</td>
+      <td>${u.todoCnt}</td>
+      <td>${u.doneCnt}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+window.filterTable = function() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    u.email.toLowerCase().includes(q) || u.name.toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+};
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
